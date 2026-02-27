@@ -1,73 +1,54 @@
-# React + TypeScript + Vite
+# Workfloss
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI-powered document editor with a chat sidebar. Talk to specialized agents that read, write, and edit documents in a live TipTap editor — while remembering things about you across sessions.
 
-Currently, two official plugins are available:
+![Workfloss](screenshot.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## React Compiler
+- **Frontend** — React 19, Vite, TipTap, Tailwind CSS 4, Radix UI, shadcn
+- **Backend** — [Convex](https://convex.dev) (realtime DB, functions, scheduling)
+- **AI** — [`@convex-dev/agent`](https://github.com/get-convex/agent) + OpenAI GPT-4o via AI SDK
+- **Auth** — `@convex-dev/auth`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Agentic Features
 
-## Expanding the ESLint configuration
+**Multi-agent setup** — Three specialized agents (freeform editor, storyboard writer, course outline designer) share a common tool set but carry domain-specific system prompts. Routed by document type at runtime.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Tool calls** — Agents use tools to interact with the system:
+- `readDocument` / `replaceDocument` — read and write document HTML through Convex mutations
+- `listAvatars` — query available avatar assets
+- `proposeMemory` — suggest facts to save to long-term memory (user confirms before persisting)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+**Semantic memory** — A `proposeMemory` tool lets agents extract user facts, preferences, and project context. Confirmed memories are injected into every future conversation via a `contextHandler`, giving agents persistent recall across sessions.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+**Live document editing** — Agents write HTML directly into the document via `replaceDocument`. The frontend picks up `pendingContent` reactively and applies it to the TipTap editor, so edits appear in real time alongside the chat.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Set up Convex (will prompt for project link on first run)
+npx convex dev
+
+# In another terminal, start the frontend
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Or run both at once:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev        # runs vite + convex dev in parallel
 ```
+
+### Environment Variables
+
+Set these in your Convex dashboard (Settings → Environment Variables):
+
+| Variable | Description |
+|---|---|
+| `OPENAI_API_KEY` | OpenAI API key for GPT-4o |
+
+Auth provider config is handled through Convex Auth — see the [Convex Auth docs](https://labs.convex.dev/auth) for setup.
