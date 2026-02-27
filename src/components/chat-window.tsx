@@ -6,6 +6,8 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { Send, Bot, User, Loader2, BrainCircuit, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MessageParts } from "@/components/message-parts";
+import { isRenderable } from "@/components/message-parts-utils";
 
 interface ChatWindowProps {
   documentId: Id<"documents">;
@@ -79,36 +81,44 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                 Load earlier messages
               </button>
             )}
-            {messages.map((msg) => (
-              <div
-                key={msg.key}
-                className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
-              >
-                {msg.role !== "user" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                )}
+            {messages.map((msg) => {
+              const parts = (msg.parts ?? []) as Array<Record<string, unknown>>;
+              const renderable = parts.filter(isRenderable);
+              if (renderable.length === 0 && !msg.text) return null;
+
+              return (
                 <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
+                  key={msg.key}
+                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
                 >
-                  {msg.text || (
-                    <span className="italic text-muted-foreground">
-                      (tool call)
-                    </span>
+                  {msg.role !== "user" && (
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                      msg.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
+                  >
+                    {renderable.length > 0 ? (
+                      <div className="flex flex-col gap-1.5">
+                        <MessageParts parts={renderable} />
+                      </div>
+                    ) : (
+                      msg.text
+                    )}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                      <User className="h-4 w-4" />
+                    </div>
                   )}
                 </div>
-                {msg.role === "user" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <User className="h-4 w-4" />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
             {pendingMemories?.map((memory) => (
               <div
                 key={memory._id}
