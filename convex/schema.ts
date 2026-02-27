@@ -36,4 +36,9 @@ export default defineSchema({
     seed: v.string(),
     createdAt: v.number(),
   }).index("by_style", ["style"]),
+  sceneLayouts: defineTable({
+    name: v.string(),
+    description: v.string(),
+    createdAt: v.number(),
+  }),
 });

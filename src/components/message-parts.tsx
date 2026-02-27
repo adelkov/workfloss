@@ -32,6 +32,11 @@ const TOOL_META: Record<string, ToolMeta> = {
     pendingLabel: "Listing avatars\u2026",
     doneLabel: "Listed avatars",
   },
+  listSceneLayouts: {
+    icon: FileText,
+    pendingLabel: "Listing scene layouts\u2026",
+    doneLabel: "Listed scene layouts",
+  },
   proposeMemory: {
     icon: BrainCircuit,
     pendingLabel: "Proposing memory\u2026",

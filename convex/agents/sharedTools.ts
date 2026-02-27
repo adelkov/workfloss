@@ -55,6 +55,19 @@ export const listAvatars = createTool({
   },
 });
 
+export const listSceneLayouts = createTool({
+  description:
+    "List available scene layout types. Returns layout IDs, names, and descriptions. Use these IDs when creating storyboard table scenes.",
+  args: z.object({}),
+  handler: async (ctx): Promise<string> => {
+    const layouts = await ctx.runQuery(
+      internal.features.sceneLayouts.listSceneLayoutsInternal,
+      {},
+    );
+    return JSON.stringify(layouts);
+  },
+});
+
 export const proposeMemory = createTool({
   description:
     "Propose saving a fact or piece of knowledge about the user to long-term memory. " +

@@ -5,6 +5,7 @@ import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { AvatarSelectorNode } from "./tiptap-extensions/avatar-selector";
+import { StoryboardTableNode } from "./tiptap-extensions/storyboard-table";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
@@ -82,6 +83,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
             StarterKit,
             sync.extension!,
             AvatarSelectorNode,
+            StoryboardTableNode,
             Placeholder.configure({
               placeholder: "Start typing or ask the AI to help...",
             }),
