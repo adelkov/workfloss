@@ -35,6 +35,8 @@ function pmJsonToText(node: PMNode): string {
         .join("\n") + "\n";
     case "codeBlock":
       return `\`\`\`\n${childText}\n\`\`\`\n\n`;
+    case "avatarSelector":
+      return `[Avatar: ${node.attrs?.avatarId ?? "none selected"}]\n\n`;
     case "horizontalRule":
       return "---\n\n";
     case "hardBreak":

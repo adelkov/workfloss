@@ -28,4 +28,10 @@ export default defineSchema({
   })
     .index("by_userId_status", ["userId", "status"])
     .index("by_threadId_status", ["threadId", "status"]),
+  avatars: defineTable({
+    name: v.string(),
+    style: v.string(),
+    seed: v.string(),
+    createdAt: v.number(),
+  }).index("by_style", ["style"]),
 });

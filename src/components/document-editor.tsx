@@ -4,6 +4,7 @@ import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { AvatarSelectorNode } from "./tiptap-extensions/avatar-selector";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
@@ -80,6 +81,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
           extensions={[
             StarterKit,
             sync.extension!,
+            AvatarSelectorNode,
             Placeholder.configure({
               placeholder: "Start typing or ask the AI to help...",
             }),
