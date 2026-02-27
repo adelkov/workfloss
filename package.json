@@ -12,9 +12,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.95",
     "@auth/core": "^0.37.0",
+    "@convex-dev/agent": "^0.3.2",
     "@convex-dev/auth": "^0.0.91",
+    "@convex-dev/prosemirror-sync": "^0.2.2",
+    "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.1",
+    "@tiptap/core": "^3.20.0",
+    "@tiptap/extension-placeholder": "^3.20.0",
+    "@tiptap/pm": "^3.20.0",
+    "@tiptap/react": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.32.0",
