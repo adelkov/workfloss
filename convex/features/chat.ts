@@ -63,21 +63,35 @@ export const createChat = mutation({
   },
 });
 
+export const generateUploadUrl = mutation({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 export const sendMessage = mutation({
   args: {
     documentId: v.id("documents"),
     prompt: v.string(),
+    storageId: v.optional(v.id("_storage")),
+    fileName: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
   },
-  handler: async (ctx, { documentId, prompt }) => {
+  handler: async (ctx, { documentId, prompt, storageId, fileName, mimeType }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(documentId);
     if (!doc || doc.userId !== userId) throw new Error("Document not found");
 
+    const displayPrompt =
+      fileName ? `📎 ${fileName}\n${prompt}` : prompt;
+
     const { messageId } = await saveMessage(ctx, components.agent, {
       threadId: doc.threadId,
-      prompt,
+      prompt: displayPrompt,
     });
 
     if (doc.title === "New Chat") {
@@ -90,6 +104,10 @@ export const sendMessage = mutation({
       promptMessageId: messageId,
       userId,
       documentType: doc.type ?? "freeform",
+      storageId,
+      fileName,
+      mimeType,
+      promptText: prompt,
     });
 
     return messageId;
@@ -102,9 +120,39 @@ export const generateResponse = internalAction({
     promptMessageId: v.string(),
     userId: v.id("users"),
     documentType: v.string(),
+    storageId: v.optional(v.id("_storage")),
+    fileName: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    promptText: v.optional(v.string()),
   },
-  handler: async (ctx, { threadId, promptMessageId, userId, documentType }) => {
+  handler: async (ctx, args) => {
+    const { threadId, promptMessageId, userId, documentType, storageId, promptText } = args;
     const agent = getAgent(documentType);
+
+    if (storageId && promptText) {
+      const fileUrl = await ctx.storage.getUrl(storageId);
+      if (fileUrl) {
+        const mediaType = args.mimeType || "application/octet-stream";
+        await agent.generateText(
+          ctx,
+          { threadId, userId },
+          {
+            promptMessageId,
+            prompt: [
+              {
+                role: "user" as const,
+                content: [
+                  { type: "text" as const, text: promptText },
+                  { type: "file" as const, data: new URL(fileUrl), mediaType },
+                ],
+              },
+            ],
+          },
+        );
+        return;
+      }
+    }
+
     await agent.generateText(
       ctx,
       { threadId, userId },

@@ -1,13 +1,15 @@
-import { useRef, useEffect, useState, type FormEvent } from "react";
+import { useRef, useEffect, useState, useCallback, type FormEvent, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { Send, Bot, User, Loader2, BrainCircuit, Check, X } from "lucide-react";
+import { Send, Bot, User, Loader2, BrainCircuit, Check, X, Paperclip, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageParts } from "@/components/message-parts";
 import { isRenderable } from "@/components/message-parts-utils";
+
+const ACCEPTED_FILE_TYPES = ".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv";
 
 interface ChatWindowProps {
   documentId: Id<"documents">;
@@ -21,6 +23,7 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
     { initialNumItems: 50 },
   );
   const sendMessage = useMutation(api.features.chat.sendMessage);
+  const generateUploadUrl = useMutation(api.features.chat.generateUploadUrl);
   const pendingMemories = useQuery(api.features.memory.getPendingMemories, {
     threadId,
   });
@@ -29,6 +32,10 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedStorageId, setUploadedStorageId] = useState<Id<"_storage"> | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const messages = results;
@@ -37,15 +44,50 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  const handleFileSelect = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setUploading(true);
+    try {
+      const url = await generateUploadUrl();
+      const result = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      setUploadedStorageId(storageId);
+    } catch {
+      setSelectedFile(null);
+      setUploadedStorageId(null);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [generateUploadUrl]);
+
+  const clearFile = useCallback(() => {
+    setSelectedFile(null);
+    setUploadedStorageId(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
     if (!text || sending) return;
 
+    const fileArgs = uploadedStorageId && selectedFile
+      ? { storageId: uploadedStorageId, fileName: selectedFile.name, mimeType: selectedFile.type }
+      : {};
+
     setInput("");
+    clearFile();
     setSending(true);
     try {
-      await sendMessage({ documentId, prompt: text });
+      await sendMessage({ documentId, prompt: text, ...fileArgs });
     } finally {
       setSending(false);
     }
@@ -168,21 +210,52 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
         )}
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex gap-2 border-t p-3"
-      >
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask the agent..."
-          className="flex-1"
-          disabled={sending}
-        />
-        <Button type="submit" size="icon" disabled={sending || !input.trim()}>
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
+      <div className="border-t">
+        {selectedFile && (
+          <div className="flex items-center gap-2 px-3 pt-2">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
+              <FileText className="h-3 w-3 shrink-0" />
+              {selectedFile.name}
+              {uploading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <button type="button" onClick={clearFile} className="ml-0.5 hover:text-foreground">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </span>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_FILE_TYPES}
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            disabled={sending || uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask the agent..."
+            className="flex-1"
+            disabled={sending}
+          />
+          <Button type="submit" size="icon" disabled={sending || uploading || !input.trim()}>
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
