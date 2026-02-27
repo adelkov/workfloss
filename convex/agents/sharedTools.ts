@@ -42,6 +42,64 @@ export const replaceDocument = createTool({
   },
 });
 
+const sceneSchema = z.object({
+  id: z.string().describe("Unique short ID, e.g. 's1', 's2'"),
+  name: z.string().describe("Scene title, e.g. 'Opening Hook'"),
+  script: z.string().describe("Narration, dialogue, or action description"),
+  avatarId: z
+    .string()
+    .describe("Avatar ID from listAvatars, or empty string if none"),
+  sceneLayoutId: z
+    .string()
+    .describe("Scene layout ID from listSceneLayouts, or empty string if none"),
+});
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export const updateStoryboard = createTool({
+  description:
+    "Create or replace the storyboard document with a title, optional description, and an array of scenes. " +
+    "Use this instead of replaceDocument when working with storyboard scenes.",
+  args: z.object({
+    title: z.string().describe("The storyboard title"),
+    description: z
+      .string()
+      .optional()
+      .describe("Optional short description or context"),
+    scenes: z
+      .array(sceneSchema)
+      .describe("Array of scene objects for the storyboard table"),
+  }),
+  handler: async (ctx, args) => {
+    const threadId = ctx.threadId;
+    if (!threadId) throw new Error("No thread context");
+
+    const scenesAttr = escapeHtml(JSON.stringify(args.scenes));
+    const parts: string[] = [
+      `<h1>${escapeHtml(args.title)}</h1>`,
+    ];
+    if (args.description) {
+      parts.push(`<p>${escapeHtml(args.description)}</p>`);
+    }
+    parts.push(
+      `<div data-type="storyboard-table" data-scenes="${scenesAttr}"></div>`,
+    );
+    const html = parts.join("");
+
+    await ctx.runMutation(
+      internal.features.chat.setPendingContent,
+      { threadId, html },
+    );
+    return "Storyboard updated successfully.";
+  },
+});
+
 export const listAvatars = createTool({
   description:
     "List available avatars the user can choose from. Returns avatar IDs, names, and styles.",

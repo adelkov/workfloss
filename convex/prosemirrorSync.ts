@@ -37,6 +37,29 @@ function pmJsonToText(node: PMNode): string {
       return `\`\`\`\n${childText}\n\`\`\`\n\n`;
     case "avatarSelector":
       return `[Avatar: ${node.attrs?.avatarId ?? "none selected"}]\n\n`;
+    case "storyboardTable": {
+      try {
+        const scenes = JSON.parse(
+          (node.attrs?.scenes as string) ?? "[]",
+        ) as Array<{
+          id: string;
+          name: string;
+          script: string;
+          avatarId: string;
+          sceneLayoutId: string;
+        }>;
+        if (scenes.length === 0) return "[Storyboard: no scenes]\n\n";
+        const lines = scenes.map(
+          (s, i) =>
+            `  Scene ${i + 1} (${s.name}): ${s.script}` +
+            (s.avatarId ? ` [avatar:${s.avatarId}]` : "") +
+            (s.sceneLayoutId ? ` [layout:${s.sceneLayoutId}]` : ""),
+        );
+        return `[Storyboard scenes]\n${lines.join("\n")}\n\n`;
+      } catch {
+        return "[Storyboard: unable to parse scenes]\n\n";
+      }
+    }
     case "horizontalRule":
       return "---\n\n";
     case "hardBreak":

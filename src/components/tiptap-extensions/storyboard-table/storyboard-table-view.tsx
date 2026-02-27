@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { useQuery } from "convex/react";
@@ -220,7 +220,7 @@ export function StoryboardTableView({
   node,
   updateAttributes,
 }: NodeViewProps) {
-  const parseScenes = useCallback((): Scene[] => {
+  const scenes = useMemo((): Scene[] => {
     try {
       const raw = node.attrs.scenes as string;
       return JSON.parse(raw) as Scene[];
@@ -229,14 +229,12 @@ export function StoryboardTableView({
     }
   }, [node.attrs.scenes]);
 
-  const scenes = parseScenes();
-
   const updateScenes = useCallback(
     (updater: (prev: Scene[]) => Scene[]) => {
-      const next = updater(parseScenes());
+      const next = updater(scenes);
       updateAttributes({ scenes: JSON.stringify(next) });
     },
-    [parseScenes, updateAttributes],
+    [scenes, updateAttributes],
   );
 
   const updateScene = useCallback(
