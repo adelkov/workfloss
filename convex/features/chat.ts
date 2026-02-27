@@ -4,6 +4,7 @@ import {
   mutation,
   internalAction,
   internalMutation,
+  internalQuery,
 } from "../_generated/server";
 import { internal, components } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -124,6 +125,18 @@ export const deleteChat = mutation({
     if (!doc || doc.userId !== userId) throw new Error("Document not found");
 
     await ctx.db.delete(documentId);
+  },
+});
+
+export const getDocumentContentByThread = internalQuery({
+  args: { threadId: v.string() },
+  handler: async (ctx, { threadId }) => {
+    const doc = await ctx.db
+      .query("documents")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .unique();
+    if (!doc) return null;
+    return doc.documentContent ?? null;
   },
 });
 

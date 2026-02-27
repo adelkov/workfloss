@@ -10,6 +10,7 @@ export default defineSchema({
     userId: v.id("users"),
     createdAt: v.number(),
     pendingContent: v.optional(v.string()),
+    documentContent: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_threadId", ["threadId"]),
