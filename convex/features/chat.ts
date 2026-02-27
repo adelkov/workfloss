@@ -10,18 +10,24 @@ import { internal, components } from "../_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { createThread, saveMessage, listUIMessages } from "@convex-dev/agent";
 import { paginationOptsValidator } from "convex/server";
-import { documentAgent } from "../agent";
+import { getAgent } from "../agent";
 
 export const listChats = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { type: v.optional(v.string()) },
+  handler: async (ctx, { type }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
+
+    const docs = await ctx.db
       .query("documents")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
+
+    if (!type || type === "freeform") {
+      return docs.filter((d) => !d.type || d.type === "freeform");
+    }
+    return docs.filter((d) => d.type === type);
   },
 });
 
@@ -37,17 +43,19 @@ export const getDocument = query({
 });
 
 export const createChat = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { type: v.optional(v.string()) },
+  handler: async (ctx, { type }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
     const threadId = await createThread(ctx, components.agent, { userId });
 
+    const docType = type || "freeform";
     const docId = await ctx.db.insert("documents", {
       threadId,
       title: "New Chat",
       userId,
+      type: docType,
       createdAt: Date.now(),
     });
 
@@ -81,6 +89,7 @@ export const sendMessage = mutation({
       threadId: doc.threadId,
       promptMessageId: messageId,
       userId,
+      documentType: doc.type ?? "freeform",
     });
 
     return messageId;
@@ -92,9 +101,11 @@ export const generateResponse = internalAction({
     threadId: v.string(),
     promptMessageId: v.string(),
     userId: v.id("users"),
+    documentType: v.string(),
   },
-  handler: async (ctx, { threadId, promptMessageId, userId }) => {
-    await documentAgent.generateText(
+  handler: async (ctx, { threadId, promptMessageId, userId, documentType }) => {
+    const agent = getAgent(documentType);
+    await agent.generateText(
       ctx,
       { threadId, userId },
       { promptMessageId },

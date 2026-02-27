@@ -8,11 +8,13 @@ export default defineSchema({
     threadId: v.string(),
     title: v.string(),
     userId: v.id("users"),
+    type: v.optional(v.string()),
     createdAt: v.number(),
     pendingContent: v.optional(v.string()),
     documentContent: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
+    .index("by_userId_type", ["userId", "type"])
     .index("by_threadId", ["threadId"]),
   semanticMemories: defineTable({
     userId: v.id("users"),

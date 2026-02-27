@@ -5,17 +5,18 @@ import { Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatListProps {
+  type: string;
   selectedId: Id<"documents"> | null;
   onSelect: (id: Id<"documents">) => void;
 }
 
-export function ChatList({ selectedId, onSelect }: ChatListProps) {
-  const chats = useQuery(api.features.chat.listChats);
+export function ChatList({ type, selectedId, onSelect }: ChatListProps) {
+  const chats = useQuery(api.features.chat.listChats, { type });
   const createChat = useMutation(api.features.chat.createChat);
   const deleteChat = useMutation(api.features.chat.deleteChat);
 
   const handleNew = async () => {
-    const id = await createChat();
+    const id = await createChat({ type });
     onSelect(id);
   };
 
