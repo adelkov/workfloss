@@ -128,6 +128,16 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
               const renderable = parts.filter(isRenderable);
               if (renderable.length === 0 && !msg.text) return null;
 
+              let attachedFileName: string | null = null;
+              let displayText = msg.text;
+              if (msg.role === "user" && msg.text?.startsWith("📎 ")) {
+                const newlineIdx = msg.text.indexOf("\n");
+                if (newlineIdx !== -1) {
+                  attachedFileName = msg.text.slice(2, newlineIdx).trim();
+                  displayText = msg.text.slice(newlineIdx + 1);
+                }
+              }
+
               return (
                 <div
                   key={msg.key}
@@ -145,12 +155,20 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                         : "bg-muted"
                     }`}
                   >
-                    {renderable.length > 0 ? (
+                    {attachedFileName ? (
+                      <>
+                        <span className="mb-1.5 inline-flex items-center gap-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[11px] font-medium">
+                          <Paperclip className="h-3 w-3" />
+                          {attachedFileName}
+                        </span>
+                        <div>{displayText}</div>
+                      </>
+                    ) : renderable.length > 0 ? (
                       <div className="flex flex-col gap-1.5">
                         <MessageParts parts={renderable} />
                       </div>
                     ) : (
-                      msg.text
+                      <div>{displayText}</div>
                     )}
                   </div>
                   {msg.role === "user" && (
