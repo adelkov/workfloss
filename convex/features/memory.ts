@@ -111,3 +111,33 @@ export const listConfirmedMemories = query({
       .collect();
   },
 });
+
+export const updateMemory = mutation({
+  args: { memoryId: v.id("semanticMemories"), content: v.string() },
+  handler: async (ctx, { memoryId, content }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const memory = await ctx.db.get(memoryId);
+    if (!memory || memory.userId !== userId) {
+      throw new Error("Memory not found");
+    }
+
+    await ctx.db.patch(memoryId, { content });
+  },
+});
+
+export const deleteMemory = mutation({
+  args: { memoryId: v.id("semanticMemories") },
+  handler: async (ctx, { memoryId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const memory = await ctx.db.get(memoryId);
+    if (!memory || memory.userId !== userId) {
+      throw new Error("Memory not found");
+    }
+
+    await ctx.db.delete(memoryId);
+  },
+});
