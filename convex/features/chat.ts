@@ -80,6 +80,7 @@ export const sendMessage = mutation({
     await ctx.scheduler.runAfter(0, internal.features.chat.generateResponse, {
       threadId: doc.threadId,
       promptMessageId: messageId,
+      userId,
     });
 
     return messageId;
@@ -90,11 +91,12 @@ export const generateResponse = internalAction({
   args: {
     threadId: v.string(),
     promptMessageId: v.string(),
+    userId: v.id("users"),
   },
-  handler: async (ctx, { threadId, promptMessageId }) => {
+  handler: async (ctx, { threadId, promptMessageId, userId }) => {
     await documentAgent.generateText(
       ctx,
-      { threadId },
+      { threadId, userId },
       { promptMessageId },
     );
   },

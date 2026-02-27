@@ -14,4 +14,18 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_threadId", ["threadId"]),
+  semanticMemories: defineTable({
+    userId: v.id("users"),
+    content: v.string(),
+    category: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("confirmed"),
+      v.literal("rejected"),
+    ),
+    threadId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_threadId_status", ["threadId", "status"]),
 });

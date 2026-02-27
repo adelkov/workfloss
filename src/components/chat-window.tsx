@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState, type FormEvent } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, BrainCircuit, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,6 +19,11 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
     { initialNumItems: 50 },
   );
   const sendMessage = useMutation(api.features.chat.sendMessage);
+  const pendingMemories = useQuery(api.features.memory.getPendingMemories, {
+    threadId,
+  });
+  const confirmMemory = useMutation(api.features.memory.confirmMemory);
+  const rejectMemory = useMutation(api.features.memory.rejectMemory);
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -102,6 +107,38 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                     <User className="h-4 w-4" />
                   </div>
                 )}
+              </div>
+            ))}
+            {pendingMemories?.map((memory) => (
+              <div
+                key={memory._id}
+                className="mx-auto w-full max-w-[90%] rounded-lg border border-border bg-card p-3"
+              >
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <BrainCircuit className="h-3.5 w-3.5" />
+                  Save to memory?
+                </div>
+                <p className="mb-1 text-sm">"{memory.content}"</p>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  {memory.category.replace("_", " ")}
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => rejectMemory({ memoryId: memory._id })}
+                  >
+                    <X className="mr-1 h-3.5 w-3.5" />
+                    Reject
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => confirmMemory({ memoryId: memory._id })}
+                  >
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                    Approve
+                  </Button>
+                </div>
               </div>
             ))}
             {(sending || isAgentTyping) && (

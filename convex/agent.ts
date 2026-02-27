@@ -1,9 +1,11 @@
 "use node";
 
 import { Agent, createTool } from "@convex-dev/agent";
+import type { ModelMessage } from "@ai-sdk/provider-utils";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { components, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 export const documentAgent = new Agent(components.agent, {
   name: "Document Editor",
@@ -18,7 +20,9 @@ Provide full HTML content using: headings (h1-h3), paragraphs (p), lists (ul/ol 
 
 Always provide the complete document content — not just the changed portion.
 
-When a user asks a question or wants to discuss without document changes, respond conversationally without using any tools.`,
+When a user asks a question or wants to discuss without document changes, respond conversationally without using any tools.
+
+When the user shares personal information, preferences, project details, or domain knowledge that would be useful to remember across conversations, use the proposeMemory tool to suggest saving it. Examples: their name, company, role, writing style preferences, project context, or domain terminology. Do not propose memories for transient requests or single-use instructions.`,
   tools: {
     readDocument: createTool({
       description:
@@ -54,6 +58,54 @@ When a user asks a question or wants to discuss without document changes, respon
         return "Document updated successfully.";
       },
     }),
+    proposeMemory: createTool({
+      description:
+        "Propose saving a fact or piece of knowledge about the user to long-term memory. " +
+        "Use this when the user shares personal information, preferences, project details, " +
+        "or domain knowledge that would be useful to remember across conversations. " +
+        "The user will be asked to confirm before it is saved.",
+      args: z.object({
+        content: z
+          .string()
+          .describe(
+            "The fact to remember, written in third person (e.g. 'User works at Acme Corp')",
+          ),
+        category: z.enum(["user_fact", "project", "domain", "preference"]),
+      }),
+      handler: async (ctx, args) => {
+        const threadId = ctx.threadId;
+        if (!threadId) throw new Error("No thread context");
+        const userId = ctx.userId as Id<"users"> | undefined;
+        if (!userId) throw new Error("No user context");
+
+        await ctx.runMutation(
+          internal.features.memory.proposePendingMemory,
+          {
+            threadId,
+            userId,
+            content: args.content,
+            category: args.category,
+          },
+        );
+        return "Memory proposed. Waiting for user confirmation.";
+      },
+    }),
   },
-  maxSteps: 5,
+  contextHandler: async (ctx, args): Promise<ModelMessage[]> => {
+    if (args.userId) {
+      const memories: Array<{ content: string }> = await ctx.runQuery(
+        internal.features.memory.getAllConfirmedMemories,
+        { userId: args.userId as Id<"users"> },
+      );
+      if (memories.length > 0) {
+        const memoryMessage: ModelMessage = {
+          role: "system",
+          content: `# Things I remember about this user\n${memories.map((m) => `- ${m.content}`).join("\n")}`,
+        };
+        return [memoryMessage, ...args.allMessages];
+      }
+    }
+    return args.allMessages;
+  },
+  maxSteps: 6,
 });
