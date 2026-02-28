@@ -43,7 +43,7 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages]);
 
   const handleFileSelect = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,9 +94,16 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
     }
   };
 
-  const isAgentTyping =
-    messages.length > 0 &&
-    messages[messages.length - 1].role === "user";
+  const isAgentTyping = useMemo(() => {
+    if (messages.length === 0) return false;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role === "user") return true;
+    if (lastMsg.role === "assistant") {
+      const parts = (lastMsg.parts ?? []) as Array<Record<string, unknown>>;
+      return parts.filter(isRenderable).length === 0 && !lastMsg.text;
+    }
+    return false;
+  }, [messages]);
 
   const lastAssistantKey = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
