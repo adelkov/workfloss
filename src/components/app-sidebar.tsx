@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -32,9 +33,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b px-4 py-3">
-        <NavLink to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      <SidebarHeader className="border-b py-3 px-2 group-data-[collapsible=icon]:px-0">
+        <NavLink
+          to="/"
+          className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center"
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Zap className="h-4 w-4" />
           </div>
           <span className="text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
@@ -120,6 +124,7 @@ export function AppSidebar() {
           <span className="group-data-[collapsible=icon]:hidden">Sign out</span>
         </Button>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }
