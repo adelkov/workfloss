@@ -6,6 +6,7 @@ import type { Id } from "../../convex/_generated/dataModel";
 import { Send, Bot, User, Loader2, BrainCircuit, Check, X, Paperclip, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ReactMarkdown from "react-markdown";
 import { MessageParts } from "@/components/message-parts";
 import { isRenderable } from "@/components/message-parts-utils";
 
@@ -187,9 +188,14 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                       <div className="flex flex-col gap-1.5">
                         <MessageParts
                           parts={renderable}
+                          role={msg.role as "user" | "assistant"}
                           disabled={msg.key !== lastAssistantKey || sending}
                           onWidgetSelect={handleWidgetSelect}
                         />
+                      </div>
+                    ) : msg.role !== "user" ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-pre:my-2">
+                        <ReactMarkdown>{displayText ?? ""}</ReactMarkdown>
                       </div>
                     ) : (
                       <div>{displayText}</div>

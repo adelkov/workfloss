@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Wrench,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import type { ToolPartState } from "@/components/message-parts-utils";
 import { isWidgetTool, getWidgetEntry } from "@/components/chat-widgets";
 
@@ -88,11 +89,12 @@ function ToolCallChip({
 
 export interface MessagePartsProps {
   parts: Array<Record<string, unknown>>;
+  role?: "user" | "assistant";
   disabled?: boolean;
   onWidgetSelect?: (label: string) => void;
 }
 
-export function MessageParts({ parts, disabled = false, onWidgetSelect }: MessagePartsProps) {
+export function MessageParts({ parts, role, disabled = false, onWidgetSelect }: MessagePartsProps) {
   const hasWidget = parts.some(
     (p) =>
       typeof p.type === "string" &&
@@ -107,7 +109,14 @@ export function MessageParts({ parts, disabled = false, onWidgetSelect }: Messag
           if (hasWidget) return null;
           const text = part.text as string;
           if (!text) return null;
-          return <span key={i}>{text}</span>;
+          if (role === "user") {
+            return <span key={i}>{text}</span>;
+          }
+          return (
+            <div key={i} className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-pre:my-2">
+              <ReactMarkdown>{text}</ReactMarkdown>
+            </div>
+          );
         }
         if (typeof part.type === "string" && (part.type as string).startsWith("tool-")) {
           const toolName = (part.type as string).slice(5);
