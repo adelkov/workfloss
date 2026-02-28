@@ -189,25 +189,6 @@ export const showOptions = createTool({
   handler: async () => "Options displayed",
 });
 
-export const showCard = createTool({
-  description:
-    "Display an informational card in the chat — use for summaries, tips, warnings, or key takeaways. " +
-    "Put any explanatory text in the 'message' field — do NOT output separate chat text alongside this tool.",
-  args: z.object({
-    message: z
-      .string()
-      .optional()
-      .describe("Short contextual text shown above the card body"),
-    title: z.string().describe("Card heading"),
-    body: z.string().describe("Card body text (plain text or short markdown)"),
-    variant: z
-      .enum(["info", "success", "warning"])
-      .optional()
-      .describe("Visual style — defaults to 'info'"),
-  }),
-  handler: async () => "Card displayed",
-});
-
 export const showSuggestions = createTool({
   description:
     "Display quick-reply suggestion chips the user can tap. " +

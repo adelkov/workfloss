@@ -9,7 +9,6 @@ import {
   listAvatars,
   proposeMemory,
   showOptions,
-  showCard,
   showSuggestions,
   memoryContextHandler,
 } from "./sharedTools";
@@ -36,12 +35,11 @@ When the user shares personal information, preferences, project details, or doma
 DISPLAY TOOLS (chat widgets):
 You have display tools that render interactive UI widgets in the chat. PREFER these over plain text whenever applicable:
 - showOptions: Use when the user's request is ambiguous and you need them to choose between approaches, styles, formats, or topics. Also use when you can offer meaningful alternatives. Example triggers: "help me write something", "what should I do?", vague requests, first message in a conversation.
-- showCard: Use to highlight a key summary, tip, or important information. Example triggers: "what is this?", after completing a task to summarize what you did.
 - showSuggestions: Use to suggest follow-up actions the user might want to take. Example triggers: after completing a document edit, when the user seems unsure what to do next.
 IMPORTANT: When using a display tool, do NOT output separate chat text. Put any explanatory text in the tool's "message" field. The widget is your entire response — no additional text before or after it.
 
 Only output plain text (without any tools) for brief clarifying responses or when none of the above tools apply.`,
-  tools: { readDocument, replaceDocument, listAvatars, proposeMemory, showOptions, showCard, showSuggestions },
+  tools: { readDocument, replaceDocument, listAvatars, proposeMemory, showOptions, showSuggestions },
   contextHandler: memoryContextHandler,
   maxSteps: 6,
 });

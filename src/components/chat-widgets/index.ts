@@ -1,8 +1,7 @@
 import { OptionPicker, type OptionPickerInput } from "./option-picker";
-import { InfoCard, type InfoCardInput } from "./info-card";
 import { SuggestionChips, type SuggestionChipsInput } from "./suggestion-chips";
 
-export type WidgetInput = OptionPickerInput | InfoCardInput | SuggestionChipsInput;
+export type WidgetInput = OptionPickerInput | SuggestionChipsInput;
 
 interface WidgetEntry {
   component: React.ComponentType<{ input: any; disabled: boolean; onSelect: (label: string) => void }>;
@@ -11,7 +10,6 @@ interface WidgetEntry {
 
 const WIDGET_TOOLS: Record<string, WidgetEntry> = {
   showOptions: { component: OptionPicker, interactive: true },
-  showCard: { component: InfoCard as WidgetEntry["component"], interactive: false },
   showSuggestions: { component: SuggestionChips, interactive: true },
 };
 
