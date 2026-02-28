@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, type FormEvent, type ChangeEvent } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo, type FormEvent, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { api } from "../../convex/_generated/api";
@@ -97,6 +97,26 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
     messages.length > 0 &&
     messages[messages.length - 1].role === "user";
 
+  const lastAssistantKey = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i].key;
+    }
+    return null;
+  }, [messages]);
+
+  const handleWidgetSelect = useCallback(
+    async (label: string) => {
+      if (sending) return;
+      setSending(true);
+      try {
+        await sendMessage({ documentId, prompt: label });
+      } finally {
+        setSending(false);
+      }
+    },
+    [sending, sendMessage, documentId],
+  );
+
   return (
     <div className="flex h-full flex-col border-r">
       <div className="border-b px-4 py-2">
@@ -165,7 +185,11 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                       </>
                     ) : renderable.length > 0 ? (
                       <div className="flex flex-col gap-1.5">
-                        <MessageParts parts={renderable} />
+                        <MessageParts
+                          parts={renderable}
+                          disabled={msg.key !== lastAssistantKey || sending}
+                          onWidgetSelect={handleWidgetSelect}
+                        />
                       </div>
                     ) : (
                       <div>{displayText}</div>

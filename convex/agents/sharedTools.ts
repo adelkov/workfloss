@@ -159,6 +159,76 @@ export const proposeMemory = createTool({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Display tools (chat widgets)
+// ---------------------------------------------------------------------------
+
+export const showOptions = createTool({
+  description:
+    "Display a set of choices for the user to pick from in the chat. " +
+    "Use this instead of listing options as text. " +
+    "Put any explanatory text in the 'message' field — do NOT output separate chat text alongside this tool.",
+  args: z.object({
+    message: z
+      .string()
+      .optional()
+      .describe("Short contextual text shown as a header inside the widget"),
+    options: z
+      .array(
+        z.object({
+          id: z.string().describe("Unique option identifier"),
+          label: z.string().describe("Display label the user sees"),
+          description: z
+            .string()
+            .optional()
+            .describe("Optional longer description"),
+        }),
+      )
+      .describe("The choices to present"),
+  }),
+  handler: async () => "Options displayed",
+});
+
+export const showCard = createTool({
+  description:
+    "Display an informational card in the chat — use for summaries, tips, warnings, or key takeaways. " +
+    "Put any explanatory text in the 'message' field — do NOT output separate chat text alongside this tool.",
+  args: z.object({
+    message: z
+      .string()
+      .optional()
+      .describe("Short contextual text shown above the card body"),
+    title: z.string().describe("Card heading"),
+    body: z.string().describe("Card body text (plain text or short markdown)"),
+    variant: z
+      .enum(["info", "success", "warning"])
+      .optional()
+      .describe("Visual style — defaults to 'info'"),
+  }),
+  handler: async () => "Card displayed",
+});
+
+export const showSuggestions = createTool({
+  description:
+    "Display quick-reply suggestion chips the user can tap. " +
+    "Use when suggesting possible next steps or follow-up actions. " +
+    "Put any explanatory text in the 'message' field — do NOT output separate chat text alongside this tool.",
+  args: z.object({
+    message: z
+      .string()
+      .optional()
+      .describe("Short contextual text shown as a header inside the widget"),
+    suggestions: z
+      .array(
+        z.object({
+          label: z.string().describe("Chip label the user sees and sends"),
+        }),
+      )
+      .describe("The suggestion chips to display"),
+  }),
+  handler: async () => "Suggestions displayed",
+});
+
 export const memoryContextHandler: ContextHandler = async (ctx, args) => {
   if (args.userId) {
     const memories = (await ctx.runQuery(

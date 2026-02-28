@@ -9,6 +9,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { ToolPartState } from "@/components/message-parts-utils";
+import { isWidgetTool, getWidgetEntry } from "@/components/chat-widgets";
 
 interface ToolMeta {
   icon: React.ComponentType<{ className?: string }>;
@@ -85,22 +86,60 @@ function ToolCallChip({
   );
 }
 
-export function MessageParts({ parts }: { parts: Array<Record<string, unknown>> }) {
+export interface MessagePartsProps {
+  parts: Array<Record<string, unknown>>;
+  disabled?: boolean;
+  onWidgetSelect?: (label: string) => void;
+}
+
+export function MessageParts({ parts, disabled = false, onWidgetSelect }: MessagePartsProps) {
+  const hasWidget = parts.some(
+    (p) =>
+      typeof p.type === "string" &&
+      (p.type as string).startsWith("tool-") &&
+      isWidgetTool((p.type as string).slice(5)),
+  );
+
   return (
     <>
       {parts.map((part, i) => {
         if (part.type === "text") {
+          if (hasWidget) return null;
           const text = part.text as string;
           if (!text) return null;
           return <span key={i}>{text}</span>;
         }
         if (typeof part.type === "string" && (part.type as string).startsWith("tool-")) {
           const toolName = (part.type as string).slice(5);
+          const state = (part.state as ToolPartState) ?? "input-available";
+
+          if (isWidgetTool(toolName)) {
+            const entry = getWidgetEntry(toolName)!;
+            const input = part.input as Record<string, unknown> | undefined;
+            if (!input || state === "input-streaming") {
+              return (
+                <Loader2
+                  key={`${part.toolCallId ?? i}`}
+                  className="h-4 w-4 animate-spin text-muted-foreground"
+                />
+              );
+            }
+            const Component = entry.component;
+            return (
+              <Component
+                key={`${part.toolCallId ?? i}`}
+                input={input}
+                disabled={disabled || !entry.interactive}
+                onSelect={onWidgetSelect ?? (() => {})}
+              />
+            );
+          }
+
           return (
             <ToolCallChip
               key={`${part.toolCallId ?? i}`}
               toolName={toolName}
-              state={(part.state as ToolPartState) ?? "input-available"}
+              state={state}
               errorText={part.errorText as string | undefined}
             />
           );

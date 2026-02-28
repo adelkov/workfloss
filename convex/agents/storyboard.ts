@@ -9,6 +9,9 @@ import {
   listAvatars,
   listSceneLayouts,
   proposeMemory,
+  showOptions,
+  showCard,
+  showSuggestions,
   memoryContextHandler,
 } from "./sharedTools";
 
@@ -42,10 +45,17 @@ IMPORTANT: Always provide the complete storyboard (all scenes) — not just the 
 
 Think in terms of visual storytelling: pacing, shot composition, transitions, and audience engagement. When the user describes a concept, proactively suggest scene breakdowns, visual metaphors, and timing.
 
-Only respond conversationally (without tools) when the user asks a question or wants to discuss something that does not involve changing the storyboard.
+When the user shares personal information, preferences, project details, or domain knowledge that would be useful to remember across conversations, use the proposeMemory tool to suggest saving it.
 
-When the user shares personal information, preferences, project details, or domain knowledge that would be useful to remember across conversations, use the proposeMemory tool to suggest saving it.`,
-  tools: { readDocument, updateStoryboard, listAvatars, listSceneLayouts, proposeMemory },
+DISPLAY TOOLS (chat widgets):
+You have display tools that render interactive UI widgets in the chat. PREFER these over plain text whenever applicable:
+- showOptions: Use when the user's request is ambiguous and you need them to choose between approaches, styles, tones, or scene structures. Also use when you can offer meaningful alternatives. Example triggers: "make me a storyboard", "help me plan a video", vague requests, first message in a conversation.
+- showCard: Use to highlight a key summary, tip, or important information. Example triggers: "what is this?", after completing a storyboard to summarize the structure.
+- showSuggestions: Use to suggest follow-up actions the user might want to take. Example triggers: after creating a storyboard, when the user seems unsure what to do next.
+IMPORTANT: When using a display tool, do NOT output separate chat text. Put any explanatory text in the tool's "message" field. The widget is your entire response — no additional text before or after it.
+
+Only output plain text (without any tools) for brief clarifying responses or when none of the above tools apply.`,
+  tools: { readDocument, updateStoryboard, listAvatars, listSceneLayouts, proposeMemory, showOptions, showCard, showSuggestions },
   contextHandler: memoryContextHandler,
   maxSteps: 10,
 });

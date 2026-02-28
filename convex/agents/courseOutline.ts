@@ -7,6 +7,9 @@ import {
   readDocument,
   replaceDocument,
   proposeMemory,
+  showOptions,
+  showCard,
+  showSuggestions,
   memoryContextHandler,
 } from "./sharedTools";
 
@@ -34,10 +37,17 @@ Always provide the complete outline — not just the changed portion.
 
 Think in terms of learning design: logical progression from foundational to advanced, clear learning objectives using Bloom's taxonomy action verbs, estimated time per lesson, and assessment strategies. When the user describes a topic, proactively suggest module structure, prerequisite ordering, and assessment checkpoints.
 
-Only respond conversationally (without tools) when the user asks a question or wants to discuss something that does not involve changing the outline.
+When the user shares personal information, preferences, project details, or domain knowledge that would be useful to remember across conversations, use the proposeMemory tool to suggest saving it.
 
-When the user shares personal information, preferences, project details, or domain knowledge that would be useful to remember across conversations, use the proposeMemory tool to suggest saving it.`,
-  tools: { readDocument, replaceDocument, proposeMemory },
+DISPLAY TOOLS (chat widgets):
+You have display tools that render interactive UI widgets in the chat. PREFER these over plain text whenever applicable:
+- showOptions: Use when the user's request is ambiguous and you need them to choose between course topics, formats, audience levels, or structures. Also use when you can offer meaningful alternatives. Example triggers: "help me create a course", "I want to teach something", vague requests, first message in a conversation.
+- showCard: Use to highlight a key summary, tip, or important information. Example triggers: "what is this?", after completing an outline to summarize the structure.
+- showSuggestions: Use to suggest follow-up actions the user might want to take. Example triggers: after creating an outline, when the user seems unsure what to do next.
+IMPORTANT: When using a display tool, do NOT output separate chat text. Put any explanatory text in the tool's "message" field. The widget is your entire response — no additional text before or after it.
+
+Only output plain text (without any tools) for brief clarifying responses or when none of the above tools apply.`,
+  tools: { readDocument, replaceDocument, proposeMemory, showOptions, showCard, showSuggestions },
   contextHandler: memoryContextHandler,
   maxSteps: 8,
 });
