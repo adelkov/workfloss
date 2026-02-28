@@ -34,7 +34,7 @@ export function WorkspacePage() {
 
       {selectedId && doc ? (
         <>
-          <div className="w-[350px] shrink-0">
+          <div className="w-[420px] shrink-0">
             <ChatWindow documentId={selectedId} threadId={doc.threadId} />
           </div>
           <div className="min-w-0 flex-1">

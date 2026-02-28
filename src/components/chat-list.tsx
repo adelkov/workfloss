@@ -53,7 +53,7 @@ export function ChatList({ type, selectedId, onSelect }: ChatListProps) {
             </Button>
           </div>
         ) : (
-          <div className="p-1">
+          <div className="space-y-1 p-1">
             {chats.map((chat) => (
               <button
                 key={chat._id}
@@ -65,7 +65,7 @@ export function ChatList({ type, selectedId, onSelect }: ChatListProps) {
                 }`}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{chat.title}</span>
+                <span className="min-w-0 flex-1 break-words">{chat.title}</span>
                 <button
                   onClick={(e) => handleDelete(e, chat._id)}
                   className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
