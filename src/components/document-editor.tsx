@@ -4,8 +4,13 @@ import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
 import { AvatarSelectorNode } from "./tiptap-extensions/avatar-selector";
 import { StoryboardTableNode } from "./tiptap-extensions/storyboard-table";
+import { EditorBubbleMenu } from "./editor-bubble-menu";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
@@ -82,6 +87,10 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
           extensions={[
             StarterKit,
             sync.extension!,
+            Underline,
+            TextStyle,
+            Color,
+            Highlight.configure({ multicolor: true }),
             AvatarSelectorNode,
             StoryboardTableNode,
             Placeholder.configure({
@@ -91,6 +100,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
           content={sync.initialContent}
         >
           <PendingContentApplier documentId={documentId} />
+          <EditorBubbleMenu />
         </EditorProvider>
       </div>
     </div>
