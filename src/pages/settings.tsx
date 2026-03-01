@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BrainCircuit, Pencil, Trash2, Check, X, Loader2 } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 const CATEGORY_LABELS: Record<string, string> = {
   user_fact: "User Fact",
@@ -126,7 +127,11 @@ function MemoryRow({
 }
 
 export function SettingsPage() {
-  const memories = useQuery(api.features.memory.listConfirmedMemories)
+  const { userId } = useAuth()
+  const memories = useQuery(
+    api.features.memory.listConfirmedMemories,
+    userId ? { userId } : "skip",
+  )
 
   const grouped = memories
     ? Object.entries(

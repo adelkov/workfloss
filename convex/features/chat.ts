@@ -7,16 +7,13 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { internal, components } from "../_generated/api";
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { createThread, saveMessage, listUIMessages } from "@convex-dev/agent";
 import { paginationOptsValidator } from "convex/server";
 import { getAgent } from "../agent";
 
 export const listChats = query({
-  args: { type: v.optional(v.string()) },
-  handler: async (ctx, { type }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+  args: { type: v.optional(v.string()), userId: v.id("users") },
+  handler: async (ctx, { type, userId }) => {
 
     const docs = await ctx.db
       .query("documents")
@@ -34,19 +31,13 @@ export const listChats = query({
 export const getDocument = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-    const doc = await ctx.db.get(documentId);
-    if (!doc || doc.userId !== userId) return null;
-    return doc;
+    return await ctx.db.get(documentId);
   },
 });
 
 export const createChat = mutation({
-  args: { type: v.optional(v.string()) },
-  handler: async (ctx, { type }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+  args: { type: v.optional(v.string()), userId: v.id("users") },
+  handler: async (ctx, { type, userId }) => {
 
     const threadId = await createThread(ctx, components.agent, { userId });
 
@@ -65,8 +56,6 @@ export const createChat = mutation({
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -80,11 +69,9 @@ export const sendMessage = mutation({
     mimeType: v.optional(v.string()),
   },
   handler: async (ctx, { documentId, prompt, storageId, fileName, mimeType }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const doc = await ctx.db.get(documentId);
-    if (!doc || doc.userId !== userId) throw new Error("Document not found");
+    if (!doc) throw new Error("Document not found");
+    const userId = doc.userId;
 
     const displayPrompt =
       fileName ? `📎 ${fileName}\n${prompt}` : prompt;
@@ -205,8 +192,6 @@ export const listMessages = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { threadId, paginationOpts }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
     return await listUIMessages(ctx, components.agent, {
       threadId,
       paginationOpts,
@@ -217,11 +202,8 @@ export const listMessages = query({
 export const deleteChat = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const doc = await ctx.db.get(documentId);
-    if (!doc || doc.userId !== userId) throw new Error("Document not found");
+    if (!doc) throw new Error("Document not found");
 
     await ctx.db.delete(documentId);
   },
@@ -257,10 +239,8 @@ export const setPendingContent = internalMutation({
 export const clearPendingContent = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
     const doc = await ctx.db.get(documentId);
-    if (!doc || doc.userId !== userId) return;
+    if (!doc) return;
     await ctx.db.patch(documentId, { pendingContent: undefined });
   },
 });

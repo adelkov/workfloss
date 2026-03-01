@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Film, GraduationCap, FileText } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 const documentTypes = [
   {
@@ -24,12 +25,13 @@ const documentTypes = [
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { name } = useAuth();
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-8">
       <div className="mb-10 text-center">
         <h1 className="text-3xl font-bold tracking-tight">
-          What do you want to work on?
+          {name ? `Hey ${name}, what do you want to work on?` : "What do you want to work on?"}
         </h1>
         <p className="mt-2 text-muted-foreground">
           Pick a document type to get started with a specialized assistant.

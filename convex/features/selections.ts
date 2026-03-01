@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const saveSelection = mutation({
   args: {
@@ -11,11 +10,9 @@ export const saveSelection = mutation({
     to: v.number(),
   },
   handler: async (ctx, { documentId, text, html, from, to }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const doc = await ctx.db.get(documentId);
-    if (!doc || doc.userId !== userId) throw new Error("Document not found");
+    if (!doc) throw new Error("Document not found");
+    const userId = doc.userId;
 
     const activeSelections = await ctx.db
       .query("selections")
@@ -44,11 +41,8 @@ export const saveSelection = mutation({
 export const dismissSelection = mutation({
   args: { selectionId: v.id("selections") },
   handler: async (ctx, { selectionId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const sel = await ctx.db.get(selectionId);
-    if (!sel || sel.userId !== userId) throw new Error("Selection not found");
+    if (!sel) throw new Error("Selection not found");
 
     await ctx.db.patch(selectionId, { status: "dismissed" });
   },
@@ -57,11 +51,8 @@ export const dismissSelection = mutation({
 export const markSelectionUsed = mutation({
   args: { selectionId: v.id("selections") },
   handler: async (ctx, { selectionId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const sel = await ctx.db.get(selectionId);
-    if (!sel || sel.userId !== userId) throw new Error("Selection not found");
+    if (!sel) throw new Error("Selection not found");
 
     await ctx.db.patch(selectionId, { status: "used" });
   },
@@ -70,9 +61,6 @@ export const markSelectionUsed = mutation({
 export const dismissActiveSelection = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const active = await ctx.db
       .query("selections")
       .withIndex("by_documentId_status", (q) =>
@@ -81,9 +69,7 @@ export const dismissActiveSelection = mutation({
       .collect();
 
     for (const sel of active) {
-      if (sel.userId === userId) {
-        await ctx.db.patch(sel._id, { status: "dismissed" as const });
-      }
+      await ctx.db.patch(sel._id, { status: "dismissed" as const });
     }
   },
 });
@@ -91,17 +77,11 @@ export const dismissActiveSelection = mutation({
 export const getActiveSelection = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-
-    const sel = await ctx.db
+    return await ctx.db
       .query("selections")
       .withIndex("by_documentId_status", (q) =>
         q.eq("documentId", documentId).eq("status", "active"),
       )
       .first();
-
-    if (!sel || sel.userId !== userId) return null;
-    return sel;
   },
 });

@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { LogOut, Settings, Zap, Home, Film, GraduationCap, FileText } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { LogOut, Settings, Zap, Home, Film, GraduationCap, FileText, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,7 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { signOut } = useAuthActions();
+  const { signOut, name } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -108,6 +108,14 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t p-2 space-y-2">
+        {name && (
+          <div className="flex items-center gap-2 px-2 py-1">
+            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate text-sm font-medium group-data-[collapsible=icon]:hidden">
+              {name}
+            </span>
+          </div>
+        )}
         <div className="flex items-center justify-between px-2">
           <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
             Theme
@@ -118,7 +126,7 @@ export function AppSidebar() {
           variant="ghost"
           size="sm"
           className="w-full justify-start gap-2 text-muted-foreground"
-          onClick={() => void signOut()}
+          onClick={signOut}
         >
           <LogOut className="h-4 w-4" />
           <span className="group-data-[collapsible=icon]:hidden">Sign out</span>

@@ -5,7 +5,6 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const proposePendingMemory = internalMutation({
   args: {
@@ -41,13 +40,8 @@ export const proposePendingMemory = internalMutation({
 export const confirmMemory = mutation({
   args: { memoryId: v.id("semanticMemories") },
   handler: async (ctx, { memoryId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const memory = await ctx.db.get(memoryId);
-    if (!memory || memory.userId !== userId) {
-      throw new Error("Memory not found");
-    }
+    if (!memory) throw new Error("Memory not found");
     if (memory.status !== "pending") return;
 
     await ctx.db.patch(memoryId, { status: "confirmed" });
@@ -57,13 +51,8 @@ export const confirmMemory = mutation({
 export const rejectMemory = mutation({
   args: { memoryId: v.id("semanticMemories") },
   handler: async (ctx, { memoryId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const memory = await ctx.db.get(memoryId);
-    if (!memory || memory.userId !== userId) {
-      throw new Error("Memory not found");
-    }
+    if (!memory) throw new Error("Memory not found");
     if (memory.status !== "pending") return;
 
     await ctx.db.patch(memoryId, { status: "rejected" });
@@ -73,9 +62,6 @@ export const rejectMemory = mutation({
 export const getPendingMemories = query({
   args: { threadId: v.string() },
   handler: async (ctx, { threadId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-
     return await ctx.db
       .query("semanticMemories")
       .withIndex("by_threadId_status", (q) =>
@@ -98,11 +84,8 @@ export const getAllConfirmedMemories = internalQuery({
 });
 
 export const listConfirmedMemories = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
     return await ctx.db
       .query("semanticMemories")
       .withIndex("by_userId_status", (q) =>
@@ -115,13 +98,8 @@ export const listConfirmedMemories = query({
 export const updateMemory = mutation({
   args: { memoryId: v.id("semanticMemories"), content: v.string() },
   handler: async (ctx, { memoryId, content }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const memory = await ctx.db.get(memoryId);
-    if (!memory || memory.userId !== userId) {
-      throw new Error("Memory not found");
-    }
+    if (!memory) throw new Error("Memory not found");
 
     await ctx.db.patch(memoryId, { content });
   },
@@ -130,13 +108,8 @@ export const updateMemory = mutation({
 export const deleteMemory = mutation({
   args: { memoryId: v.id("semanticMemories") },
   handler: async (ctx, { memoryId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
     const memory = await ctx.db.get(memoryId);
-    if (!memory || memory.userId !== userId) {
-      throw new Error("Memory not found");
-    }
+    if (!memory) throw new Error("Memory not found");
 
     await ctx.db.delete(memoryId);
   },

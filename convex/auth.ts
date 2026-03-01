@@ -1,17 +1,27 @@
-import Resend from "@auth/core/providers/resend";
-import { convexAuth } from "@convex-dev/auth/server";
+import { v } from "convex/values";
+import { mutation } from "./_generated/server";
 
-const ALLOWED_DOMAIN = "@colossyan.com";
+export const validatePassword = mutation({
+  args: { password: v.string(), name: v.string() },
+  handler: async (ctx, { password, name }) => {
+    const expected = process.env.DEMO_PASSWORD;
+    if (!expected) throw new Error("DEMO_PASSWORD not configured on the server");
+    if (password !== expected) throw new Error("Invalid password");
 
-const resendProvider = Resend({});
-const originalSend = resendProvider.sendVerificationRequest!;
-resendProvider.sendVerificationRequest = async (params) => {
-  if (!params.identifier.endsWith(ALLOWED_DOMAIN)) {
-    throw new Error("Only @colossyan.com accounts are allowed");
-  }
-  return originalSend(params);
-};
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error("Name is required");
 
-export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [resendProvider],
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_name", (q) => q.eq("name", trimmed))
+      .unique();
+
+    if (existing) return { userId: existing._id, name: existing.name };
+
+    const userId = await ctx.db.insert("users", {
+      name: trimmed,
+      createdAt: Date.now(),
+    });
+    return { userId, name: trimmed };
+  },
 });

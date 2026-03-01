@@ -3,6 +3,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id, Doc } from "../../convex/_generated/dataModel";
 import { Plus, MessageSquare, Trash2, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 function ThreadStatusIcon({ status }: { status: Doc<"documents">["agentStatus"] }) {
   switch (status) {
@@ -24,12 +25,17 @@ interface ChatListProps {
 }
 
 export function ChatList({ type, selectedId, onSelect }: ChatListProps) {
-  const chats = useQuery(api.features.chat.listChats, { type });
+  const { userId } = useAuth();
+  const chats = useQuery(
+    api.features.chat.listChats,
+    userId ? { type, userId } : "skip",
+  );
   const createChat = useMutation(api.features.chat.createChat);
   const deleteChat = useMutation(api.features.chat.deleteChat);
 
   const handleNew = async () => {
-    const id = await createChat({ type });
+    if (!userId) return;
+    const id = await createChat({ type, userId });
     onSelect(id);
   };
 

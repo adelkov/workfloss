@@ -1,8 +1,8 @@
-import { useConvexAuth } from "convex/react"
 import { Navigate, Outlet } from "react-router-dom"
+import { useAuth } from "@/lib/auth-context"
 
 export function AuthGuard() {
-  const { isAuthenticated, isLoading } = useConvexAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
     return (
