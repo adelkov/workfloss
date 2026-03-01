@@ -115,9 +115,13 @@ export function EditorBubbleMenu() {
   return (
     <BubbleMenu
       editor={editor}
-      tippyOptions={{
-        duration: 150,
-        onHide: () => setOpenPicker(null),
+      shouldShow={({ editor: e }) => {
+        if (!e.isEditable) return false;
+        if (e.state.selection.empty) {
+          setOpenPicker(null);
+          return false;
+        }
+        return true;
       }}
     >
       <div className="relative flex items-center gap-0.5 rounded-lg border bg-background p-1 shadow-md">

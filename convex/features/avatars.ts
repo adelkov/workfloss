@@ -1,4 +1,3 @@
-import { v } from "convex/values";
 import { query, mutation, internalQuery } from "../_generated/server";
 
 export const listAvatars = query({
