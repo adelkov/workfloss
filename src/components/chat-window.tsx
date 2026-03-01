@@ -39,6 +39,7 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedStorageId, setUploadedStorageId] = useState<Id<"_storage"> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +48,10 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [threadId]);
 
   const handleFileSelect = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,6 +107,7 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
       }
     } finally {
       setSending(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -350,11 +356,11 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
             <Paperclip className="h-4 w-4" />
           </Button>
           <Input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask the agent..."
             className="flex-1"
-            disabled={sending}
           />
           <Button type="submit" size="icon" disabled={sending || uploading || !input.trim()}>
             <Send className="h-4 w-4" />
