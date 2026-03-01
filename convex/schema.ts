@@ -12,6 +12,14 @@ export default defineSchema({
     createdAt: v.number(),
     pendingContent: v.optional(v.string()),
     documentContent: v.optional(v.string()),
+    agentStatus: v.optional(
+      v.union(
+        v.literal("idle"),
+        v.literal("working"),
+        v.literal("completed"),
+        v.literal("error"),
+      ),
+    ),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_type", ["userId", "type"])
@@ -41,4 +49,20 @@ export default defineSchema({
     description: v.string(),
     createdAt: v.number(),
   }),
+  selections: defineTable({
+    userId: v.id("users"),
+    documentId: v.id("documents"),
+    text: v.string(),
+    html: v.string(),
+    from: v.number(),
+    to: v.number(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("used"),
+      v.literal("dismissed"),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_documentId_status", ["documentId", "status"])
+    .index("by_userId", ["userId"]),
 });

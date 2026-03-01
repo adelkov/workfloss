@@ -1,8 +1,21 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
-import { Plus, MessageSquare, Trash2 } from "lucide-react";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { Plus, MessageSquare, Trash2, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+function ThreadStatusIcon({ status }: { status: Doc<"documents">["agentStatus"] }) {
+  switch (status) {
+    case "working":
+      return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />;
+    case "completed":
+      return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />;
+    case "error":
+      return <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />;
+    default:
+      return <MessageSquare className="h-4 w-4 shrink-0" />;
+  }
+}
 
 interface ChatListProps {
   type: string;
@@ -64,7 +77,7 @@ export function ChatList({ type, selectedId, onSelect }: ChatListProps) {
                     : "text-muted-foreground"
                 }`}
               >
-                <MessageSquare className="h-4 w-4 shrink-0" />
+                <ThreadStatusIcon status={chat.agentStatus} />
                 <span className="min-w-0 flex-1 break-words">{chat.title}</span>
                 <button
                   onClick={(e) => handleDelete(e, chat._id)}

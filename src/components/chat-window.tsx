@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { Send, Bot, User, Loader2, BrainCircuit, Check, X, Paperclip, FileText } from "lucide-react";
+import { Send, Bot, User, Loader2, BrainCircuit, Check, X, Paperclip, FileText, TextSelect } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
@@ -30,6 +30,9 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
   });
   const confirmMemory = useMutation(api.features.memory.confirmMemory);
   const rejectMemory = useMutation(api.features.memory.rejectMemory);
+  const activeSelection = useQuery(api.features.selections.getActiveSelection, { documentId });
+  const dismissSelection = useMutation(api.features.selections.dismissSelection);
+  const markSelectionUsed = useMutation(api.features.selections.markSelectionUsed);
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -84,11 +87,19 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
       ? { storageId: uploadedStorageId, fileName: selectedFile.name, mimeType: selectedFile.type }
       : {};
 
+    const selectionToUse = activeSelection;
+    const prompt = selectionToUse
+      ? `[Selection: "${selectionToUse.text}"]\n${text}`
+      : text;
+
     setInput("");
     clearFile();
     setSending(true);
     try {
-      await sendMessage({ documentId, prompt: text, ...fileArgs });
+      await sendMessage({ documentId, prompt, ...fileArgs });
+      if (selectionToUse) {
+        await markSelectionUsed({ selectionId: selectionToUse._id });
+      }
     } finally {
       setSending(false);
     }
@@ -157,13 +168,25 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
               if (renderable.length === 0 && !msg.text) return null;
 
               let attachedFileName: string | null = null;
+              let selectionText: string | null = null;
               let displayText = msg.text;
-              if (msg.role === "user" && msg.text?.startsWith("📎 ")) {
-                const newlineIdx = msg.text.indexOf("\n");
-                if (newlineIdx !== -1) {
-                  attachedFileName = msg.text.slice(2, newlineIdx).trim();
-                  displayText = msg.text.slice(newlineIdx + 1);
+              if (msg.role === "user" && msg.text) {
+                let remaining = msg.text;
+                if (remaining.startsWith("[Selection: \"")) {
+                  const closeIdx = remaining.indexOf("\"]\n");
+                  if (closeIdx !== -1) {
+                    selectionText = remaining.slice(13, closeIdx);
+                    remaining = remaining.slice(closeIdx + 3);
+                  }
                 }
+                if (remaining.startsWith("📎 ")) {
+                  const newlineIdx = remaining.indexOf("\n");
+                  if (newlineIdx !== -1) {
+                    attachedFileName = remaining.slice(2, newlineIdx).trim();
+                    remaining = remaining.slice(newlineIdx + 1);
+                  }
+                }
+                displayText = remaining;
               }
 
               return (
@@ -183,12 +206,20 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
                         : "bg-muted"
                     }`}
                   >
-                    {attachedFileName ? (
+                    {(selectionText || attachedFileName) ? (
                       <>
-                        <span className="mb-1.5 inline-flex items-center gap-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[11px] font-medium">
-                          <Paperclip className="h-3 w-3" />
-                          {attachedFileName}
-                        </span>
+                        {selectionText && (
+                          <span className="mb-1 inline-flex items-center gap-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[11px] font-medium">
+                            <TextSelect className="h-3 w-3 shrink-0" />
+                            <span className="truncate max-w-[180px]">{selectionText}</span>
+                          </span>
+                        )}
+                        {attachedFileName && (
+                          <span className="mb-1 inline-flex items-center gap-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[11px] font-medium">
+                            <Paperclip className="h-3 w-3" />
+                            {attachedFileName}
+                          </span>
+                        )}
                         <div>{displayText}</div>
                       </>
                     ) : renderable.length > 0 ? (
@@ -266,19 +297,38 @@ export function ChatWindow({ documentId, threadId }: ChatWindowProps) {
       </div>
 
       <div className="border-t">
-        {selectedFile && (
-          <div className="flex items-center gap-2 px-3 pt-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
-              <FileText className="h-3 w-3 shrink-0" />
-              {selectedFile.name}
-              {uploading ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <button type="button" onClick={clearFile} className="ml-0.5 hover:text-foreground">
+        {(activeSelection || selectedFile) && (
+          <div className="flex flex-wrap items-center gap-2 px-3 pt-2">
+            {activeSelection && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
+                <TextSelect className="h-3 w-3 shrink-0" />
+                <span className="truncate max-w-[200px]">
+                  {activeSelection.text.length > 60
+                    ? activeSelection.text.slice(0, 60) + "..."
+                    : activeSelection.text}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => dismissSelection({ selectionId: activeSelection._id })}
+                  className="ml-0.5 hover:text-foreground"
+                >
                   <X className="h-3 w-3" />
                 </button>
-              )}
-            </span>
+              </span>
+            )}
+            {selectedFile && (
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
+                <FileText className="h-3 w-3 shrink-0" />
+                {selectedFile.name}
+                {uploading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <button type="button" onClick={clearFile} className="ml-0.5 hover:text-foreground">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3">

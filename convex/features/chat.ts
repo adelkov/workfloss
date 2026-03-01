@@ -99,6 +99,8 @@ export const sendMessage = mutation({
       await ctx.db.patch(documentId, { title });
     }
 
+    await ctx.db.patch(documentId, { agentStatus: "working" });
+
     await ctx.scheduler.runAfter(0, internal.features.chat.generateResponse, {
       threadId: doc.threadId,
       promptMessageId: messageId,
@@ -129,35 +131,71 @@ export const generateResponse = internalAction({
     const { threadId, promptMessageId, userId, documentType, storageId, promptText } = args;
     const agent = getAgent(documentType);
 
-    if (storageId && promptText) {
-      const fileUrl = await ctx.storage.getUrl(storageId);
-      if (fileUrl) {
-        const mediaType = args.mimeType || "application/octet-stream";
-        await agent.generateText(
-          ctx,
-          { threadId, userId },
-          {
-            promptMessageId,
-            prompt: [
-              {
-                role: "user" as const,
-                content: [
-                  { type: "text" as const, text: promptText },
-                  { type: "file" as const, data: new URL(fileUrl), mediaType },
-                ],
-              },
-            ],
-          },
-        );
-        return;
+    try {
+      if (storageId && promptText) {
+        const fileUrl = await ctx.storage.getUrl(storageId);
+        if (fileUrl) {
+          const mediaType = args.mimeType || "application/octet-stream";
+          await agent.generateText(
+            ctx,
+            { threadId, userId },
+            {
+              promptMessageId,
+              prompt: [
+                {
+                  role: "user" as const,
+                  content: [
+                    { type: "text" as const, text: promptText },
+                    { type: "file" as const, data: new URL(fileUrl), mediaType },
+                  ],
+                },
+              ],
+            },
+          );
+          await ctx.runMutation(internal.features.chat.setAgentStatus, {
+            threadId,
+            status: "completed" as const,
+          });
+          return;
+        }
       }
-    }
 
-    await agent.generateText(
-      ctx,
-      { threadId, userId },
-      { promptMessageId },
-    );
+      await agent.generateText(
+        ctx,
+        { threadId, userId },
+        { promptMessageId },
+      );
+      await ctx.runMutation(internal.features.chat.setAgentStatus, {
+        threadId,
+        status: "completed" as const,
+      });
+    } catch (error) {
+      await ctx.runMutation(internal.features.chat.setAgentStatus, {
+        threadId,
+        status: "error" as const,
+      });
+      throw error;
+    }
+  },
+});
+
+export const setAgentStatus = internalMutation({
+  args: {
+    threadId: v.string(),
+    status: v.union(
+      v.literal("idle"),
+      v.literal("working"),
+      v.literal("completed"),
+      v.literal("error"),
+    ),
+  },
+  handler: async (ctx, { threadId, status }) => {
+    const doc = await ctx.db
+      .query("documents")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .unique();
+    if (!doc) return;
+    await ctx.db.patch(doc._id, { agentStatus: status });
   },
 });
 
