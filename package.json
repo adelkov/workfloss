@@ -7,7 +7,8 @@
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
     "dev:frontend": "vite",
     "dev:backend": "convex dev",
-    "build": "convex codegen && tsc --noEmit -p tsconfig.app.json && vite build",
+    "build": "tsc --noEmit -p tsconfig.app.json && vite build",
+    "build:vercel": "convex deploy --cmd 'tsc --noEmit -p tsconfig.app.json && vite build'",
     "lint": "eslint .",
     "preview": "vite preview"
   },
