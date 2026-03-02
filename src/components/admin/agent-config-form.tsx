@@ -5,7 +5,7 @@ import type { Id } from "../../../convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { MarkdownEditor } from "@/components/markdown-editor"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
@@ -124,13 +124,10 @@ export function AgentConfigForm({ config }: { config: AgentConfig }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="config-instructions">Instructions</Label>
-        <Textarea
-          id="config-instructions"
+        <Label>Instructions</Label>
+        <MarkdownEditor
           value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          rows={20}
-          className="font-mono text-sm"
+          onChange={setInstructions}
           placeholder="System prompt for this sub-agent..."
         />
       </div>
