@@ -5,6 +5,8 @@ import { SignInPage } from "@/pages/sign-in"
 import { HomePage } from "@/pages/home"
 import { WorkspacePage } from "@/pages/workspace"
 import { SettingsPage } from "@/pages/settings"
+import { AdminPage } from "@/pages/admin"
+import { AdminEditorPage } from "@/pages/admin-editor"
 import { NotFoundPage } from "@/pages/not-found"
 
 export const router = createBrowserRouter([
@@ -18,6 +20,8 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: "w/:type", element: <WorkspacePage /> },
           { path: "settings", element: <SettingsPage /> },
+          { path: "admin", element: <AdminPage /> },
+          { path: "admin/:configId", element: <AdminEditorPage /> },
           { path: "*", element: <NotFoundPage /> },
         ],
       },

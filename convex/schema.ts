@@ -67,4 +67,47 @@ export default defineSchema({
   })
     .index("by_documentId_status", ["documentId", "status"])
     .index("by_userId", ["userId"]),
+  agentConfigs: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    instructions: v.string(),
+    model: v.optional(v.string()),
+    maxSteps: v.optional(v.number()),
+    assignedAgentTypes: v.array(v.string()),
+    status: v.union(v.literal("active"), v.literal("archived")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_status", ["status"]),
+  skills: defineTable({
+    agentConfigId: v.id("agentConfigs"),
+    name: v.string(),
+    slug: v.string(),
+    description: v.string(),
+    procedure: v.string(),
+    status: v.union(v.literal("active"), v.literal("archived")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentConfigId", ["agentConfigId"])
+    .index("by_slug", ["slug"])
+    .index("by_status", ["status"]),
+  skillTemplates: defineTable({
+    skillId: v.id("skills"),
+    name: v.string(),
+    slug: v.string(),
+    description: v.string(),
+    content: v.string(),
+    fileType: v.union(
+      v.literal("template"),
+      v.literal("example"),
+      v.literal("reference"),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_skillId", ["skillId"])
+    .index("by_slug", ["slug"]),
 });

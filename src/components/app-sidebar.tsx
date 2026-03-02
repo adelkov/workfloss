@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
-import { LogOut, Settings, Zap, Home, Film, GraduationCap, FileText, User } from "lucide-react";
+import { LogOut, Settings, Zap, Home, Film, GraduationCap, FileText, User, Shield } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,7 @@ const workspaceItems = [
 ];
 
 const navItems = [
+  { title: "Admin", href: "/admin", icon: Shield },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 

@@ -160,6 +160,60 @@ export const proposeMemory = createTool({
 });
 
 // ---------------------------------------------------------------------------
+// Sub-agent delegation tools
+// ---------------------------------------------------------------------------
+
+export const listAgentConfigsTool = createTool({
+  description:
+    "List available specialized sub-agents. Returns their slugs, names, and brief descriptions. " +
+    "Use this to discover sub-agents that can handle specific tasks.",
+  args: z.object({}),
+  handler: async (ctx): Promise<string> => {
+    const threadId = ctx.threadId;
+    if (!threadId) return "[]";
+
+    const configs = (await ctx.runQuery(
+      internal.features.agentConfigs.getConfigsForAgentType,
+      { threadId },
+    )) as Array<{ slug: string; name: string; description: string }>;
+    if (configs.length === 0) return "No sub-agents available.";
+    return JSON.stringify(configs);
+  },
+});
+
+export const delegateToAgentTool = createTool({
+  description:
+    "Delegate a task to a specialized sub-agent. The sub-agent will execute autonomously " +
+    "using its configured skills and tools. Its actions will be visible in the chat. " +
+    "Use listAgentConfigs first to discover available sub-agents.",
+  args: z.object({
+    agentSlug: z
+      .string()
+      .describe("The slug of the sub-agent to delegate to (from listAgentConfigs)"),
+    task: z
+      .string()
+      .describe("Detailed description of what the sub-agent should accomplish"),
+  }),
+  handler: async (ctx, args): Promise<string> => {
+    const threadId = ctx.threadId;
+    if (!threadId) throw new Error("No thread context");
+    const userId = ctx.userId;
+    if (!userId) throw new Error("No user context");
+
+    const result: string = await ctx.runAction(
+      internal.agents.subAgentRunner.run,
+      {
+        agentSlug: args.agentSlug,
+        task: args.task,
+        threadId,
+        userId,
+      },
+    );
+    return result || "Sub-agent completed its task.";
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Display tools (chat widgets)
 // ---------------------------------------------------------------------------
 
@@ -211,20 +265,40 @@ export const showSuggestions = createTool({
 });
 
 export const memoryContextHandler: ContextHandler = async (ctx, args) => {
+  const systemMessages: Array<{ role: "system"; content: string }> = [];
+
   if (args.userId) {
     const memories = (await ctx.runQuery(
       internal.features.memory.getAllConfirmedMemories,
       { userId: args.userId as Id<"users"> },
     )) as Array<{ content: string }>;
     if (memories.length > 0) {
-      return [
-        {
-          role: "system" as const,
-          content: `# Things I remember about this user\n${memories.map((m) => `- ${m.content}`).join("\n")}`,
-        },
-        ...args.allMessages,
-      ];
+      systemMessages.push({
+        role: "system" as const,
+        content: `# Things I remember about this user\n${memories.map((m) => `- ${m.content}`).join("\n")}`,
+      });
     }
+  }
+
+  if (args.threadId) {
+    try {
+      const configs = (await ctx.runQuery(
+        internal.features.agentConfigs.getConfigsForAgentType,
+        { threadId: args.threadId },
+      )) as Array<{ slug: string; name: string }>;
+      if (configs.length > 0) {
+        systemMessages.push({
+          role: "system" as const,
+          content: `# Available Sub-Agents (use listAgentConfigs/delegateToAgent tools for details)\n${configs.map((c) => `- ${c.slug}: ${c.name}`).join("\n")}`,
+        });
+      }
+    } catch {
+      // Ignore errors from missing configs table during migration
+    }
+  }
+
+  if (systemMessages.length > 0) {
+    return [...systemMessages, ...args.allMessages];
   }
   return args.allMessages;
 };

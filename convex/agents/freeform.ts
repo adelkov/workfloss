@@ -10,6 +10,8 @@ import {
   proposeMemory,
   showOptions,
   showSuggestions,
+  listAgentConfigsTool,
+  delegateToAgentTool,
   memoryContextHandler,
 } from "./sharedTools";
 
@@ -38,8 +40,16 @@ You have display tools that render interactive UI widgets in the chat. PREFER th
 - showSuggestions: Use to suggest follow-up actions the user might want to take. Example triggers: after completing a document edit, when the user seems unsure what to do next.
 IMPORTANT: When using a display tool, do NOT output separate chat text. Put any explanatory text in the tool's "message" field. The widget is your entire response — no additional text before or after it.
 
-Only output plain text (without any tools) for brief clarifying responses or when none of the above tools apply.`,
-  tools: { readDocument, replaceDocument, listAvatars, proposeMemory, showOptions, showSuggestions },
+Only output plain text (without any tools) for brief clarifying responses or when none of the above tools apply.
+
+SPECIALIZED SUB-AGENTS:
+You have access to specialized sub-agents configured by admins with specific skills and procedures.
+- Use listAgentConfigs to discover available sub-agents for the current workspace type.
+- Use delegateToAgent to hand off a task to a sub-agent when it has relevant skills.
+- The sub-agent will execute autonomously and its actions will be visible in the chat.
+- After delegation completes, you'll receive the result and can continue your work.
+- Only delegate when a sub-agent's skills clearly match the task. For general requests, handle them yourself.`,
+  tools: { readDocument, replaceDocument, listAvatars, proposeMemory, showOptions, showSuggestions, listAgentConfigs: listAgentConfigsTool, delegateToAgent: delegateToAgentTool },
   contextHandler: memoryContextHandler,
-  maxSteps: 6,
+  maxSteps: 9,
 });
