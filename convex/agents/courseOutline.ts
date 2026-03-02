@@ -16,7 +16,7 @@ import {
 
 export const courseOutlineAgent = new Agent(components.agent, {
   name: "Course Outline Designer",
-  languageModel: openai("gpt-4o"),
+  languageModel: openai("gpt-5-mini"),
   instructions: `You are a curriculum design specialist. You help users plan, structure, and refine course outlines for online courses, workshops, and training programs.
 
 CRITICAL RULE: When a user asks you to write, create, edit, or modify the course outline, you MUST use the replaceDocument tool. NEVER output course content directly in the chat. The outline is displayed in a separate editor pane — the only way to put content there is via replaceDocument.

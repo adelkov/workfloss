@@ -84,7 +84,7 @@ export const run = internalAction({
     dynamicTools.readDocument = readDocument;
     dynamicTools.replaceDocument = replaceDocument;
 
-    const model = config.model || "gpt-4o";
+    const model = config.model || "gpt-5.2";
     const subAgent = new Agent(components.agent, {
       name: config.name,
       languageModel: openai(model),

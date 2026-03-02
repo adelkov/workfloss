@@ -18,7 +18,7 @@ import {
 
 export const storyboardAgent = new Agent(components.agent, {
   name: "Storyboard Writer",
-  languageModel: openai("gpt-4o"),
+  languageModel: openai("gpt-5-mini"),
   instructions: `You are a storyboard specialist. You help users plan, structure, and write storyboards for video content — explainers, ads, tutorials, social reels, and more.
 
 CRITICAL RULE: When a user asks you to write, create, edit, or modify the storyboard, you MUST use the updateStoryboard tool. NEVER output storyboard content directly in the chat. The storyboard is displayed in a separate editor pane — the only way to put content there is via updateStoryboard.

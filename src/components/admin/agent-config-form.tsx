@@ -23,11 +23,22 @@ const AGENT_TYPES = [
 ] as const
 
 const MODEL_OPTIONS = [
-  "gpt-4o",
-  "gpt-4o-mini",
+  // GPT-5 family (latest)
+  "gpt-5.2",
+  "gpt-5.1",
+  "gpt-5",
+  "gpt-5-mini",
+  "gpt-5-nano",
+  // Reasoning models
+  "o3",
+  "o4-mini",
+  "o3-mini",
+  // GPT-4 family
   "gpt-4.1",
   "gpt-4.1-mini",
   "gpt-4.1-nano",
+  "gpt-4o",
+  "gpt-4o-mini",
 ] as const
 
 interface AgentConfig {
@@ -46,7 +57,7 @@ export function AgentConfigForm({ config }: { config: AgentConfig }) {
   const [name, setName] = useState(config.name)
   const [slug, setSlug] = useState(config.slug)
   const [instructions, setInstructions] = useState(config.instructions)
-  const [model, setModel] = useState(config.model || "gpt-4o")
+  const [model, setModel] = useState(config.model || "gpt-5.2")
   const [maxSteps, setMaxSteps] = useState(config.maxSteps ?? 10)
   const [assignedTypes, setAssignedTypes] = useState<string[]>(config.assignedAgentTypes)
   const [saving, setSaving] = useState(false)
@@ -55,7 +66,7 @@ export function AgentConfigForm({ config }: { config: AgentConfig }) {
     setName(config.name)
     setSlug(config.slug)
     setInstructions(config.instructions)
-    setModel(config.model || "gpt-4o")
+    setModel(config.model || "gpt-5.2")
     setMaxSteps(config.maxSteps ?? 10)
     setAssignedTypes(config.assignedAgentTypes)
   }, [config])
@@ -77,7 +88,7 @@ export function AgentConfigForm({ config }: { config: AgentConfig }) {
     name !== config.name ||
     slug !== config.slug ||
     instructions !== config.instructions ||
-    model !== (config.model || "gpt-4o") ||
+    model !== (config.model || "gpt-5.2") ||
     maxSteps !== (config.maxSteps ?? 10) ||
     JSON.stringify(assignedTypes.sort()) !==
       JSON.stringify([...config.assignedAgentTypes].sort())

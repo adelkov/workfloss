@@ -17,7 +17,7 @@ import {
 
 export const freeformAgent = new Agent(components.agent, {
   name: "Document Editor",
-  languageModel: openai("gpt-4o"),
+  languageModel: openai("gpt-5-mini"),
   instructions: `You are an AI document editing assistant. You help users create, edit, and improve documents.
 
 CRITICAL RULE: When a user asks you to write, create, edit, or modify document content (stories, articles, lists, anything), you MUST use the replaceDocument tool. NEVER output document content directly in the chat. The document is displayed in a separate editor pane — the only way to put content there is via replaceDocument.
