@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Archive, RotateCcw, Loader2, Plus } from "lucide-react"
 import { AgentConfigForm } from "@/components/admin/agent-config-form"
 import { SkillEditor, SkillCreateForm } from "@/components/admin/skill-editor"
+import { TemplateList } from "@/components/admin/template-editor"
 
 export function AdminEditorPage() {
   const { configId } = useParams<{ configId: string }>()
@@ -27,7 +28,14 @@ export function AdminEditorPage() {
 
   const [showAddSkill, setShowAddSkill] = useState(false)
   const [newSkillId, setNewSkillId] = useState<Id<"skills"> | null>(null)
+  const [selectedSkillId, setSelectedSkillId] = useState<Id<"skills"> | null>(null)
   const [archiving, setArchiving] = useState(false)
+
+  const selectedSkill = skills?.find((s) => s._id === selectedSkillId) ?? null
+  const templates = useQuery(
+    api.features.skillTemplates.listTemplatesBySkill,
+    selectedSkillId ? { skillId: selectedSkillId } : "skip",
+  )
 
   if (!configId) {
     navigate("/admin")
@@ -171,6 +179,11 @@ export function AdminEditorPage() {
               key={skill._id}
               skill={skill}
               defaultOpen={skill._id === newSkillId}
+              onOpenChange={(open) => {
+                if (open) {
+                  setSelectedSkillId(skill._id)
+                }
+              }}
             />
           ))}
         </div>
@@ -194,6 +207,24 @@ export function AdminEditorPage() {
           </div>
         )}
       </div>
+
+      {selectedSkill && (
+        <div className="rounded-xl border bg-card p-6 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Templates</h3>
+            <p className="text-sm text-muted-foreground">
+              Templates for <span className="font-medium text-foreground">{selectedSkill.name}</span> — reference files the sub-agent can load during execution.
+            </p>
+          </div>
+          {templates === undefined ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <TemplateList templates={templates} skillId={selectedSkill._id} />
+          )}
+        </div>
+      )}
     </div>
     </div>
   )

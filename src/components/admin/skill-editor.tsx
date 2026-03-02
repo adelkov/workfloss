@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useQuery, useMutation } from "convex/react"
+import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronDown, ChevronRight, Loader2, Archive, RotateCcw, Plus } from "lucide-react"
-import { TemplateList } from "./template-editor"
 import { useAuth } from "@/lib/auth-context"
 
 function slugify(text: string): string {
@@ -38,18 +37,22 @@ interface Skill {
 export function SkillEditor({
   skill,
   defaultOpen,
+  onOpenChange,
 }: {
   skill: Skill
   defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
   const updateSkill = useMutation(api.features.skills.updateSkill)
   const archiveSkill = useMutation(api.features.skills.archiveSkill)
   const restoreSkill = useMutation(api.features.skills.restoreSkill)
-  const templates = useQuery(api.features.skillTemplates.listTemplatesBySkill, {
-    skillId: skill._id,
-  })
 
   const [open, setOpen] = useState(defaultOpen ?? false)
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value)
+    onOpenChange?.(value)
+  }
   const [name, setName] = useState(skill.name)
   const [slug, setSlug] = useState(skill.slug)
   const [description, setDescription] = useState(skill.description)
@@ -97,7 +100,7 @@ export function SkillEditor({
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={open} onOpenChange={handleOpenChange}>
       <CollapsibleTrigger asChild>
         <button className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-accent/50">
           <div className="flex items-center gap-2 min-w-0">
@@ -113,11 +116,6 @@ export function SkillEditor({
             >
               {skill.status}
             </Badge>
-            {templates && templates.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {templates.length} template{templates.length !== 1 ? "s" : ""}
-              </span>
-            )}
           </div>
         </button>
       </CollapsibleTrigger>
@@ -215,16 +213,6 @@ export function SkillEditor({
               {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
               Save Skill
             </Button>
-          </div>
-
-          <div className="border-t pt-4">
-            {templates === undefined ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <TemplateList templates={templates} skillId={skill._id} />
-            )}
           </div>
         </div>
       </CollapsibleContent>
